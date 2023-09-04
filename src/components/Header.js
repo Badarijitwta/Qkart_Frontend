@@ -1,16 +1,16 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Avatar, Button, Stack } from "@mui/material";
 import Box from "@mui/material/Box";
-import React,{useState,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import "./Header.css";
 import { Link } from "react-router-dom";
 
 const Header = ({ children, hasHiddenAuthButtons }) => {
-  const [data,setdata]=useState(null)
+  const [data, setdata] = useState(null);
   useEffect(() => {
     // Retrieve data from localStorage when the component mounts
-    const storedData = localStorage.getItem('token');
-    
+    const storedData = localStorage.getItem("token");
+
     if (storedData) {
       // If data exists in localStorage, update the component's state
       setdata(storedData);
@@ -24,6 +24,7 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
             <img src="logo_light.svg" alt="QKart-icon"></img>
           </Link>
         </Box>
+        {children}
         <Link to="/">
           <Button
             className="explore-button"
@@ -36,7 +37,7 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
       </Box>
     );
   }
-  
+
   return (
     <Box className="header">
       <Box className="header-title">
@@ -44,6 +45,7 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
           <img src="logo_light.svg" alt="QKart-icon"></img>
         </Link>
       </Box>
+      {children}
       <Stack direction={"row"} spacing={1} alignItems="center">
         {data ? (
           <>
@@ -55,7 +57,7 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
               variant="text"
               onClick={() => {
                 localStorage.clear();
-                setdata(null)
+                setdata(null);
               }}
             >
               Logout
