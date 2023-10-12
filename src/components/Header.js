@@ -58,6 +58,7 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
               onClick={() => {
                 localStorage.clear();
                 setdata(null);
+                window.location.reload()
               }}
             >
               Logout

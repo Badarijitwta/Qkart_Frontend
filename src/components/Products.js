@@ -15,6 +15,7 @@ import Footer from "./Footer";
 import Header from "./Header";
 import "./Products.css";
 import ProductCard from "./ProductCard";
+import Cart, { generateCartItemsFrom } from "./Cart";
 
 // Definition of Data Structures used
 /**
@@ -32,6 +33,9 @@ const Products = () => {
   const [loading, setloading] = useState(true);
   const [products, setproducts] = useState([]);
   const [debouncetime, setdebouncetime] = useState(null);
+  const [items, setItems] = useState([]);
+  const token = localStorage.getItem("token");
+  const { enqueueSnackbar } = useSnackbar();
 
   // TODO: CRIO_TASK_MODULE_PRODUCTS - Fetch products data and store it
   /**
@@ -77,12 +81,43 @@ const Products = () => {
     } catch (e) {}
   };
 
+  const fetchCart = async (token) => {
+    if (!token) return;
+    try {
+      const response = await axios.get(`${config.endpoint}/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // console.log(response)
+      return response.data;
+    } catch (e) {
+      if (e.response && e.response.status === 400) {
+        enqueueSnackbar(e.response.data.message, {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar(
+          "Something went Wrong. Please check the backend is running",
+          {
+            variant: "error",
+          }
+        );
+      }
+    }
+  };
+
   useEffect(() => {
-    (async () => {
+    const onLoader = async () => {
       let products = await performAPICall();
       setproducts(products);
       setloading(false);
-    })();
+      const cartData = await fetchCart(token);
+      const CartItems = generateCartItemsFrom(cartData, products);
+      setItems(CartItems);
+      // console.log(CartItems)
+    };
+    onLoader();
   }, []);
 
   // TODO: CRIO_TASK_MODULE_PRODUCTS - Implement search logic
@@ -107,6 +142,68 @@ const Products = () => {
       setproducts(search.data);
     } catch (e) {
       setproducts([]);
+    }
+  };
+
+  const isItemInCart = (items, productId) => {
+    return items.find((item) => item.productId === productId) ? true : false;
+  };
+
+  const addtocart = async (
+    products,
+    items,
+    token,
+    productId,
+    qty,
+    options = { preventDuplicate: false }
+  ) => {
+    if (!token) {
+      enqueueSnackbar("Login to add an item to the Cart", {
+        variant: "warning",
+      });
+      return;
+    }
+    if (isItemInCart(items, productId) && options.preventDuplicate) {
+      enqueueSnackbar(
+        "Item already in cart. Use the cart sidebar to update quantity or remove item",
+        {
+          variant: "warning",
+        }
+      );
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${config.endpoint}/cart`,
+        {
+          productId: productId,
+          qty: qty,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-type": "application/json",
+          },
+        }
+      );
+      // console.log(response)
+      const CartItems = generateCartItemsFrom(response.data, products);
+      setItems(CartItems);
+      return response.data;
+    } catch (e) {
+      if (e.response && e.response.status === 400) {
+        enqueueSnackbar(e.response.data.message, {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar(
+          "Could not able to add product to Cart. Something went Wrong. Please check the backend is running",
+          {
+            variant: "error",
+          }
+        );
+      }
     }
   };
 
@@ -138,21 +235,21 @@ const Products = () => {
       <Header>
         {/* TODO: CRIO_TASK_MODULE_PRODUCTS - Display search bar in the header for Products page */}
         <TextField
-        className="search-desktop"
-        size=""
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <Search color="primary" />
-            </InputAdornment>
-          ),
-        }}
-        placeholder="Search for items/categories"
-        name="search"
-        onChange={(e) => {
-          debounceSearch(e,debouncetime)
-        }}
-      />
+          className="search-desktop"
+          size=""
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Search color="primary" />
+              </InputAdornment>
+            ),
+          }}
+          placeholder="Search for items/categories"
+          name="search"
+          onChange={(e) => {
+            debounceSearch(e, debouncetime);
+          }}
+        />
       </Header>
 
       {/* Search view for mobiles */}
@@ -170,39 +267,59 @@ const Products = () => {
         placeholder="Search for items/categories"
         name="search"
         onChange={(e) => {
-          debounceSearch(e,debouncetime)
+          debounceSearch(e, debouncetime);
         }}
       />
       <Grid container>
-        <Grid item className="product-grid">
+        <Grid
+          item
+          md={token && products.length ? 9 : 12}
+          className="product-grid"
+        >
           <Box className="hero">
             <p className="hero-heading">
               India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
               to your door step
             </p>
           </Box>
-        </Grid>
-      </Grid>
-
-      {loading ? (
-        <Box className="loading">
-          <CircularProgress />
-          <Typography>Loading the products....</Typography>
-        </Box>
-      ) : products.length === 0 ? (
-        <Box className="loading">
-          <SentimentDissatisfied />
-          <Typography>No Products found</Typography>
-        </Box>
-      ) : (
-        <Grid container spacing={2} marginX={1} marginY={1}>
-          {products.map((product) => (
-            <Grid Item key={product._id} xs={6} md={3}>
-              <ProductCard product={product} />
+          {loading ? (
+            <Box className="loading">
+              <CircularProgress />
+              <Typography>Loading the products....</Typography>
+            </Box>
+          ) : products.length === 0 ? (
+            <Box className="loading">
+              <SentimentDissatisfied />
+              <Typography>No Products found</Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={2} marginY="1rem" paddingX="1.3rem">
+              {products.map((product) => (
+                <Grid Item key={product._id} xs={6} md={3}>
+                  <ProductCard
+                    product={product}
+                    handleAddToCart={async () => {
+                      await addtocart(products, items, token, product._id, 1, {
+                        preventDuplicate: false,
+                      });
+                    }}
+                  />
+                </Grid>
+              ))}
             </Grid>
-          ))}
+          )}
         </Grid>
-      )}
+        {token ? (
+          <Grid item md={3} xs={12} bgcolor="#E9F5E1">
+            <Cart
+              token={token}
+              products={products}
+              items={items}
+              handleQuantity={addtocart}
+            />
+          </Grid>
+        ) : null}
+      </Grid>
 
       <Footer />
     </div>
