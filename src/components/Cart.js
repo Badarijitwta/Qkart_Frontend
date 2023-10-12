@@ -117,6 +117,7 @@ const ItemQuantity = ({ value, handleAdd, handleDelete }) => {
  *
  */
 const Cart = ({ token, products, items = [], handleQuantity }) => {
+  let history=useHistory()
   if (!items.length) {
     return (
       <Box className="cart empty">
@@ -216,6 +217,7 @@ const Cart = ({ token, products, items = [], handleQuantity }) => {
             variant="contained"
             startIcon={<ShoppingCart />}
             className="checkout-btn"
+            onClick={(e)=>history.push('/checkout')}
           >
             Checkout
           </Button>

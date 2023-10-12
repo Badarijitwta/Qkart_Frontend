@@ -300,7 +300,7 @@ const Products = () => {
                     product={product}
                     handleAddToCart={async () => {
                       await addtocart(products, items, token, product._id, 1, {
-                        preventDuplicate: false,
+                        preventDuplicate: true,
                       });
                     }}
                   />
