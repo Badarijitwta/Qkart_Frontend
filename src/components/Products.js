@@ -295,7 +295,7 @@ const Products = () => {
           ) : (
             <Grid container spacing={2} marginY="1rem" paddingX="1.3rem">
               {products.map((product) => (
-                <Grid Item key={product._id} xs={6} md={3}>
+                <Grid item key={product._id} xs={6} md={3}>
                   <ProductCard
                     product={product}
                     handleAddToCart={async () => {
