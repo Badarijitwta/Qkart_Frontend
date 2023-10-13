@@ -336,7 +336,7 @@ const Checkout = () => {
   const deleteAddress = async (token, addressId) => {
     try {
       // TODO: CRIO_TASK_MODULE_CHECKOUT - Delete selected address from the backend and display the latest list of addresses
-      const response = axios.delete(
+      const response = await axios.delete(
         `${config.endpoint}/user/addresses/${addressId}`,
         {
           headers: {
