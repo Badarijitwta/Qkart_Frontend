@@ -56,6 +56,11 @@ export const generateCartItemsFrom = (cartData, productsData) => {
   return mergeCart;
 };
 
+
+const getTotalItems=(items)=>{
+  const total = items.reduce((total, item) => total + item.qty, 0);
+  return total;
+}
 /**
  * Get the total value of all products added to the cart
  *
@@ -86,7 +91,14 @@ export const getTotalCartValue = (items = []) => {
  *
  *
  */
-const ItemQuantity = ({ value, handleAdd, handleDelete }) => {
+const ItemQuantity = ({ value, handleAdd, handleDelete, isReadOnly }) => {
+  if(isReadOnly){
+    return(
+    <Box>
+      Qty:{value}
+    </Box>
+    )
+  }
   return (
     <Stack direction="row" alignItems="center">
       <IconButton size="small" color="primary" onClick={handleDelete}>
@@ -116,7 +128,7 @@ const ItemQuantity = ({ value, handleAdd, handleDelete }) => {
  *
  *
  */
-const Cart = ({ token, products, items = [], handleQuantity }) => {
+const Cart = ({ token, products, items = [], handleQuantity, hasCheckOutButton=false,isReadOnly=false }) => {
   let history=useHistory()
   if (!items.length) {
     return (
@@ -161,9 +173,11 @@ const Cart = ({ token, products, items = [], handleQuantity }) => {
                     alignItems="center"
                   >
                     <ItemQuantity
+                      isReadOnly={isReadOnly}
                       // Add required props by checking implementation
                       value={item.qty}
-                      handleAdd={async () => {
+                      handleAdd={async () => 
+                        {
                         await handleQuantity(
                           products,
                           items,
@@ -211,7 +225,7 @@ const Cart = ({ token, products, items = [], handleQuantity }) => {
           </Box>
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" className="cart-footer">
+        {hasCheckOutButton &&(<Box display="flex" justifyContent="flex-end" className="cart-footer">
           <Button
             color="primary"
             variant="contained"
@@ -221,8 +235,27 @@ const Cart = ({ token, products, items = [], handleQuantity }) => {
           >
             Checkout
           </Button>
-        </Box>
+        </Box>)}
       </Box>
+      {isReadOnly && (<Box className="cart" padding="1rem">
+        <h2>Order Details</h2>
+        <Box className="cart-row">
+          <p>Product</p>
+          <p>{getTotalItems(items)}</p>
+        </Box>
+        <Box className="cart-row">
+          <p>SubTotal</p>
+          <p>${getTotalCartValue(items)}</p>
+        </Box>
+        <Box className="cart-row">
+          <p>Shipping Charges</p>
+          <p>${0}</p>
+        </Box>
+        <Box className="cart-row" fontSize="1.25rem" fontWeight="700">
+          <p>Total</p>
+          <p>${getTotalCartValue(items)}</p>
+        </Box>
+      </Box>)}
     </>
   );
 };

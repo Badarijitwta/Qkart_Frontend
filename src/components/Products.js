@@ -316,6 +316,7 @@ const Products = () => {
               products={products}
               items={items}
               handleQuantity={addtocart}
+              hasCheckOutButton
             />
           </Grid>
         ) : null}
